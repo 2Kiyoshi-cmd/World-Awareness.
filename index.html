@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Global Warming Awareness Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: #f5f7fa;
+      color: #333;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 1.5rem 1rem 3rem;
+      line-height: 1.6;
+    }
+
+    header {
+      text-align: center;
+      padding: 2rem 1rem 1rem;
+      color: #4a6f8a;
+      font-weight: 600;
+    }
+
+    h1 {
+      margin-bottom: 0.25rem;
+      font-weight: 700;
+      font-size: 2.8rem;
+      color: #2c3e50;
+    }
+
+    p {
+      font-size: 1.1rem;
+      color: #5d7a8a;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .chart-container, #disasters, #news, #cta {
+      max-width: 720px;
+      margin: 2rem auto;
+      padding: 2rem 2.5rem;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+      color: #2c3e50;
+    }
+
+    canvas {
+      width: 100% !important;
+      height: 320px !important;
+      border-radius: 6px;
+      background: #f9fafb;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      font-weight: 700;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
+      color: #34495e;
+      border-bottom: 2px solid #a2b9c6;
+      padding-bottom: 0.4rem;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    #disasters li, #news li {
+      margin: 0.75rem 0;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid #e1e8ed;
+      font-weight: 500;
+      color: #4a6f8a;
+    }
+
+    a {
+      color: #3a7ca5;
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+
+    a:hover {
+      color: #2a5d7b;
+      text-decoration: underline;
+    }
+
+    #cta {
+      background: #e4f0f6;
+      color: #2c3e50;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      border-radius: 8px;
+    }
+
+    #cta ul {
+      list-style: inside square;
+      text-align: left;
+      max-width: 480px;
+      margin: 0 auto;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #3a7ca5;
+    }
+
+    #loading {
+      text-align: center;
+      margin-top: 2rem;
+      font-style: italic;
+      color: #7f8c8d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌡️ Global Warming Awareness Tracker</h1>
+    <p>Real-time data, disasters, and how you can help.</p>
+  </header>
+
+  <section class="chart-container">
+    <h2>Atmospheric CO₂ Levels (ppm)</h2>
+    <canvas id="co2Chart"></canvas>
+  </section>
+
+  <section class="chart-container">
+    <h2>Global Temperature Anomalies (°C)</h2>
+    <canvas id="tempChart"></canvas>
+  </section>
+
+  <section id="disasters">
+    <h2>Recent Major Climate Disasters</h2>
+    <ul id="disasterList">
+      <li>Loading disasters...</li>
+    </ul>
+  </section>
+
+  <section id="news">
+    <h2>Latest Climate News</h2>
+    <ul id="newsList">
+      <li>Loading news...</li>
+    </ul>
+  </section>
+
+  <section id="cta">
+    <h2>What You Can Do</h2>
+    <ul>
+      <li>Reduce energy consumption — turn off lights & unplug devices</li>
+      <li>Use public transport, bike, or walk whenever possible</li>
+      <li>Support renewable energy and eco-friendly products</li>
+      <li>Reduce, reuse, and recycle to minimize waste</li>
+      <li>Educate others and raise awareness about climate change</li>
+    </ul>
+  </section>
+
+  <div id="loading"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    async function fetchTempData() {
+      try {
+        // Simulated temperature anomaly data
+        return {
+          labels: ['2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022'],
+          temps: [0.61, 0.65, 0.74, 0.90, 0.99, 0.91, 0.85, 0.95, 1.02, 0.84, 1.15]
+        }
+      } catch(e) {
+        console.error('Failed to fetch temperature data:', e);
+      }
+    }
+
+    function createChart(ctx, labels, data, label, borderColor, bgColor, yLabel) {
+      return new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label,
+            data,
+            borderColor,
+            backgroundColor: bgColor,
+            fill: true,
+            tension: 0.3,
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: false,
+              title: {
+                display: true,
+                text: yLabel
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              labels: {
+                color: '#2c3e50'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    async function loadDisasters() {
+      const disasterList = document.getElementById('disasterList');
+      disasterList.innerHTML = '';
+      // Example disasters data
+      const disasters = [
+        { name: 'Australian Bushfires', date: '2023-01-15', description: 'Devastating fires burned over 18 million hectares.', link: 'https://en.wikipedia.org/wiki/2019–20_Australian_bushfire_season' },
+        { name: 'Floods in Pakistan', date: '2022-08-01', description: 'Severe flooding affected millions.', link: 'https://en.wikipedia.org/wiki/2022_Pakistan_floods' },
+        { name: 'Hurricane Ida', date: '2021-08-29', description: 'Category 4 hurricane caused major destruction.', link: 'https://en.wikipedia.org/wiki/Hurricane_Ida' }
+      ];
+      disasters.forEach(d => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${d.name}</strong> (${d.date}): ${d.description} <a href="${d.link}" target="_blank" rel="noopener">Learn more</a>`;
+        disasterList.appendChild(li);
+      });
+    }
+
+    async function loadNews() {
+      const newsList = document.getElementById('newsList');
+      newsList.innerHTML = '';
+      // Sample news entries
+      const news = [
+        { title: 'UN Climate Report Warns of Accelerating Impacts', url: 'https://www.un.org/en/climatechange/reports' },
+        { title: 'Extreme Heatwaves Sweep Across Europe', url: 'https://www.bbc.com/news/world-europe-heatwave' },
+        { title: 'New Study Shows Arctic Ice Melt Speeding Up', url: 'https://www.nationalgeographic.com/environment/article/arctic-ice-melt' }
+      ];
+      news.forEach(n => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${n.url}" target="_blank" rel="noopener">${n.title}</a>`;
+        newsList.appendChild(li);
+      });
+    }
+
+    async function render() {
+      const loading = document.getElementById('loading');
+      loading.textContent = 'Loading data...';
+
+      // CO2 Chart - Static data for Mauna Loa CO2 ppm
+      const co2Ctx = document.getElementById('co2Chart').getContext('2d');
+      const co2Labels = ['2012', '2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021', '2022'];
+      const co2Data = [393.85, 395.31, 397.34, 399.69, 404.24, 406.55, 408.52, 411.44, 412.45, 414.24, 416.45];
+      createChart(co2Ctx, co2Labels, co2Data, 'CO₂ ppm', 'rgba(60, 120, 180, 1)', 'rgba(60, 120, 180, 0.3)', 'Parts Per Million');
+
+      // Temp anomaly chart
+      const tempCtx = document.getElementById('tempChart').getContext('2d');
+      const tempData = await fetchTempData();
+      createChart(tempCtx, tempData.labels, tempData.temps, 'Temperature Anomaly (°C)', 'rgba(90, 150, 110, 1)', 'rgba(90, 150, 110, 0.3)', 'Degrees Celsius');
+
+      // Load disasters and news
+      await loadDisasters();
+      await loadNews();
+
+      loading.textContent = '';
+    }
+
+    render();
+  </script>
+</body>
+</html>
